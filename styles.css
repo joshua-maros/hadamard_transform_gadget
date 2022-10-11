@@ -1,0 +1,23 @@
+body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#root {
+    height: 100vh;
+    overflow: hidden;
+    display: grid;
+    grid-template-areas:
+        "header header"
+        "left right"
+        ;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 10em 1fr;
+}
+
+#left {
+    grid-area: left;
+    width: 100%;
+    height: 100%;
+}
