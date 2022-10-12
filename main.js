@@ -47,20 +47,24 @@ function main() {
     document.oncontextmenu = () => false;
     document.getElementById('magnitude-tool').addEventListener('click', () => { state.selectedTool = 'magnitude' });
     document.getElementById('phase-tool').addEventListener('click', () => { state.selectedTool = 'phase' });
+    for (const i of [1, 2, 3, 4, 6]) {
+        document.getElementById(`select-${i}`).addEventListener('click', () => { setNumBits(i); draw(); })
+    }
     if (!touchDevice) {
         document.getElementById('magnitude-tool').remove();
         document.getElementById('phase-tool').remove();
     }
 
-    const setNumBits = (numBits, cols) => {
-        state.cols = cols;
+    const setNumBits = (numBits) => {
+        state.cols = Math.pow(2, Math.ceil(numBits / 2));
         state.input = [];
         state.input.push(polarComplexNum(1.0, 0.0));
-        for (let i = 1; i < numBits; i++) {
+        const numCoefficients = Math.pow(2, numBits);
+        for (let i = 1; i < numCoefficients; i++) {
             state.input.push(polarComplexNum(0.0, 0.0));
         }
     };
-    setNumBits(4, 2);
+    setNumBits(6);
 
     const GRID_START = point(0.2, 0.2);
     const GRID_SIZE = 0.6;
@@ -333,6 +337,8 @@ function getRenderingContextPlusExtras(canvas) {
 
     ctx.fillComplexNum = (center, size, num) => {
         ctx.lineWidth = 0.2 * size;
+        ctx.strokeStyle = '#888';
+        ctx.fillAndStrokeCircle(center, 0.1 * size);
         ctx.fillStyle = '#d902bd';
         ctx.strokeStyle = '#fc42e4';
         ctx.fillAndStrokeCircle(addPoint(center, point(size * num.r, size * num.i)), 0.6 * size * num.m);
@@ -344,8 +350,8 @@ function getRenderingContextPlusExtras(canvas) {
     ctx.fillNumberGrid = (topLeft, size, numbers, cols) => {
         const step = size / cols;
         const p = addPoint(topLeft, point(step / 2, step / 2));
-        // const maxm = Math.max(...numbers.map(x => x.m), 1e-4);
-        const maxm = 1.0;
+        const maxm = Math.max(...numbers.map(x => x.m), 1e-4);
+        // const maxm = 1.0;
         for (const num of numbers) {
             ctx.fillComplexNum(p, step / 4.0, scaleComplexNum(num, 1.0 / maxm));
             p.x += step;
@@ -355,11 +361,13 @@ function getRenderingContextPlusExtras(canvas) {
             }
         }
         const magSquared = numbers.reduce((acc, next) => acc + next.m * next.m, 0);
-        ctx.scale(0.01, 0.01);
         ctx.font = '4px Arial';
         ctx.fillStyle = '#fff';
         // Scale to work around a kerning bug.
-        ctx.fillText(`Number icons scaled up ${prettyFmtNum(1.0 / maxm)}x`, 100.0 * topLeft.x, 100.0 * (topLeft.y + size + 0.1));
+        ctx.scale(0.01, 0.01);
+        if (maxm < 0.99) {
+            ctx.fillText(`Number icons scaled up ${prettyFmtNum(1.0 / maxm)}x`, 100.0 * topLeft.x, 100.0 * (topLeft.y + size + 0.1));
+        }
         ctx.scale(100.0, 100.0);
     }
 
