@@ -1,56 +1,61 @@
 <script setup lang="ts">
 import type { ComplexNum } from '@/math/ComplexNum';
-import type { EditEvent } from '@/math/EditEvent';
+import type { EditEndEvent, EditEvent, EditStartEvent } from '@/events';
 import { computed } from 'vue';
 
 const props = defineProps<{
   num: ComplexNum,
-  normalizationFactor: number,
 }>();
 
 const emit = defineEmits<{
-  (name: 'edit-start'): void,
+  (name: 'edit-start', event: EditStartEvent): void,
   (name: 'edit', event: EditEvent): void,
-  (name: 'edit-end'): void,
+  (name: 'edit-end', event: EditEndEvent): void,
 }>();
-
-const normalizedNum = computed(() => props.num.scaled(props.normalizationFactor));
 
 const scale = 53;
 const phaseSize = 0.65;
 
-const radius = computed(() => normalizedNum.value.magnitude() * scale);
+const radius = computed(() => props.num.magnitude() * scale);
 
 let startx: number, starty: number;
 
 function onMouseDown(event: MouseEvent) {
-  startx = event.offsetX;
-  starty = event.offsetY;
+  event.preventDefault();
+  startx = event.clientX;
+  starty = event.clientY;
   const target = event.currentTarget as HTMLElement;
   const rect = target.getBoundingClientRect();
   const width = rect.width;
   const height = rect.height;
+  const tool = event.button == 0 ? 'magnitude' : 'phase';
+  let editFired = false;
   const moveListener = (event: MouseEvent) => {
-    console.log(event.offsetY, height);
-    const angle = Math.atan2(event.offsetY - (height / 2), event.offsetX - (width / 2));
-    const delta = -(event.offsetY - starty) + (event.offsetX - startx)
-    emit('edit', { angle, delta });
+    const angle = Math.atan2(event.clientY - rect.top - (height / 2), event.clientX - rect.left - (width / 2));
+    const dy = event.clientY - starty;
+    const dx = event.clientX - startx;
+    const delta = (-dy + dx) / width;
+    if (!editFired && Math.abs(dy) + Math.abs(dx) < 1.0 * parseFloat(getComputedStyle(document.body).fontSize)) {
+      return;
+    }
+    editFired = true;
+    emit('edit', { angle, delta, tool });
   };
   const mouseUpListener = () => {
     window.removeEventListener("mousemove", moveListener);
     window.removeEventListener("mouseup", mouseUpListener);
-    emit('edit-end');
+    emit('edit-end', { editFired, tool });
   };
   window.addEventListener("mousemove", moveListener);
   window.addEventListener("mouseup", mouseUpListener);
-  emit('edit-start');
+  emit('edit-start', { tool });
 }
 </script>
 
 <template>
   <svg viewBox="-100 -100 200 200" xmlns="http://www.w3.org/2000/svg" @mousedown="onMouseDown">
-    <ellipse class="phase" :cx="normalizedNum.real * scale" :cy="normalizedNum.imaginary * scale"
-      :rx="phaseSize * radius" :ry="phaseSize * radius" />
+    <ellipse class="phase" :cx="num.real * scale" :cy="num.imaginary * scale" :rx="phaseSize * radius"
+      :ry="phaseSize * radius" />
     <ellipse class="magnitude" cx="0" cy="0" :rx="radius" :ry="radius" />
   </svg>
 </template>

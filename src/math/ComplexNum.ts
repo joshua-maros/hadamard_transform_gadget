@@ -35,6 +35,18 @@ export class ComplexNum {
     return new ComplexNum(this.real * by, this.imaginary * by)
   }
 
+  scaledByRatio(target: number, source: number): ComplexNum {
+    if (source < 1e-5) {
+      if (this.magnitude() < 1e-5) {
+        return ComplexNum.polar(target, 0.0);
+      } else {
+        throw new Error('Cannot scale a non-zero number from scale zero.');
+      }
+    } else {
+      return this.scaled(target / source)
+    }
+  }
+
   clone(): ComplexNum {
     return new ComplexNum(this.real, this.imaginary);
   }
