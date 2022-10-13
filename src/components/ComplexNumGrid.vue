@@ -10,13 +10,13 @@ const props = defineProps<{
 
 const style = computed(() => `display: grid;`
   + `grid-template-columns: ${'1fr '.repeat(props.cols)};`
-  + `grid-template-rows: ${'auto '.repeat(props.cols)};`
+  + `grid-template-rows: ${'auto '.repeat(Math.ceil(props.nums.length / props.cols))};`
 );
 </script>
 
 <template>
   <div :style="style">
-    <ComplexNumDisplay v-for="(num, idx) in nums" :key="idx" />
+    <ComplexNumDisplay v-for="(num, idx) in nums" :key="idx" :num="num" :normalization-factor="1"/>
   </div>
 </template>
 
