@@ -5,7 +5,7 @@ import ComplexNumGrid from "../components/ComplexNumGrid.vue";
 
 <template>
   <main>
-    <ComplexNumGrid :cols="4" :nums="[ComplexNum.polar(1.0, 0.0), ComplexNum.polar(1.0, 3.14)]" />
+    <ComplexNumGrid :cols="1" :nums="[ComplexNum.polar(1.0, 0.0), ComplexNum.polar(1.0, 3.14)]" />
   </main>
 </template>
 

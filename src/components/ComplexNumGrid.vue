@@ -8,9 +8,14 @@ const props = defineProps<{
   nums: Array<ComplexNum>,
 }>();
 
+const rows = computed(() => Math.ceil(props.nums.length / props.cols));
+
 const style = computed(() => `display: grid;`
+  + `max-width: 100%;`
+  + `max-height: 100%;`
+  + `aspect-ratio: ${props.cols} / ${rows.value};`
   + `grid-template-columns: ${'1fr '.repeat(props.cols)};`
-  + `grid-template-rows: ${'auto '.repeat(Math.ceil(props.nums.length / props.cols))};`
+  + `grid-template-rows: ${'1fr'.repeat(rows.value)};`
 );
 </script>
 

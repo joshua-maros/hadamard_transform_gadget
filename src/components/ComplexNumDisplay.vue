@@ -9,7 +9,7 @@ const props = defineProps<{
 
 const normalizedNum = computed(() => props.num.scaled(props.normalizationFactor));
 
-const scale = 50;
+const scale = 53;
 const phaseSize = 0.65;
 
 const radius = computed(() => normalizedNum.value.magnitude() * scale);
@@ -26,7 +26,6 @@ const radius = computed(() => normalizedNum.value.magnitude() * scale);
 <style scoped>
 svg {
   width: 100%;
-  aspect-ratio: 1/1;
 }
 
 svg ellipse.magnitude {
