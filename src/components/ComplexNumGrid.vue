@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ComplexNum } from "@/math/ComplexNum";
-import type { EditEvent } from "@/events";
+import type { EditEndEvent, EditEvent, EditStartEvent } from "@/events";
 import { computed, reactive, ref } from "vue";
 import ComplexNumDisplay from "./ComplexNumDisplay.vue";
 
@@ -43,11 +43,11 @@ const setMagnitudes = (requests: Array<{ index: number, magnitude: number }>) =>
     }
     result[index] = newVal;
   }
-  emit('update:modelValue', result)
+  return result;
 }
 
 
-const editStart = () => {
+const editStart = (event: EditStartEvent, editIndex: number) => {
   previousValue.value = Array.from(props.modelValue);
 }
 
@@ -55,12 +55,48 @@ const edit = (event: EditEvent, editIndex: number) => {
   if (event.tool == 'magnitude') {
     const oldTargetMag = previousValue.value[editIndex].magnitude();
     const newTargetMag = Math.sqrt(Math.min(Math.max(oldTargetMag * oldTargetMag + event.delta, 0.0), 1.0));
-    setMagnitudes([{ index: editIndex, magnitude: newTargetMag }]);
+    emit('update:modelValue', setMagnitudes([{ index: editIndex, magnitude: newTargetMag }]));
   } else {
     const result = Array.from(previousValue.value);
     result[editIndex] = result[editIndex].withPhaseFrom(ComplexNum.polar(1.0, event.angle));
     emit('update:modelValue', result)
   }
+}
+
+const editEnd = (event: EditEndEvent, editIndex: number) => {
+  let result = Array.from(previousValue.value);
+  if (!event.editFired) {
+    if (event.tool == 'magnitude') {
+      const nonZero = result.filter(x => x.magnitude() > 1e-5).length;
+      const targetMagnitude = Math.sqrt(1.0 / (nonZero + 1.0));
+      const typicalMagnitude = Math.sqrt(1.0 / nonZero);
+      const currentlyHigh = result[editIndex].magnitude() >= typicalMagnitude / 10.0;
+      result = setMagnitudes([{ index: editIndex, magnitude: currentlyHigh ? 0.0 : targetMagnitude }]);
+    } else if (event.tool == 'phase') {
+      const n = result[editIndex].clone();
+      if (n.magnitude() >= 1e-5) {
+        n.real = -n.real;
+        n.imaginary = -n.imaginary;
+      }
+      result[editIndex] = n;
+    }
+  }
+  if (event.tool == 'magnitude') {
+    const nonZero = result.filter(x => x.magnitude() > 1e-5).length;
+    const typicalMagnitude = Math.sqrt(1.0 / nonZero);
+    let allIndices = [];
+    for (let i = 0; i < result.length; i++) allIndices.push(i);
+    const close = allIndices.filter(i => Math.abs(result[i].magnitude() - typicalMagnitude) < 0.2 * typicalMagnitude);
+    const reqs = close.map(index => ({ index, magnitude: typicalMagnitude }));
+    previousValue.value = Array.from(result);
+    result = setMagnitudes(reqs);
+  } else if (event.tool == 'phase') {
+    const num = result[editIndex];
+    const phase = num.phase();
+    const snappedPhase = Math.round(phase / Math.PI * 12.0) / 12.0 * Math.PI;
+    previousValue.value[editIndex] = ComplexNum.polar(num.magnitude(), snappedPhase);
+  }
+  emit('update:modelValue', result);
 }
 </script>
 
@@ -68,7 +104,7 @@ const edit = (event: EditEvent, editIndex: number) => {
   <div>
     <div :style="style">
       <ComplexNumDisplay v-for="(num, idx) in modelValue" :key="idx" :num="num" :normalization-factor="1"
-        @edit-start="editStart" @edit="edit($event, idx)" />
+        @edit-start="editStart($event, idx)" @edit="edit($event, idx)" @edit-end="editEnd($event, idx)" />
     </div>
     <div class="size-hint">asdf</div>
   </div>

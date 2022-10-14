@@ -23,6 +23,10 @@ export class ComplexNum {
     return Math.sqrt(this.real * this.real + this.imaginary * this.imaginary);
   }
 
+  phase(): number {
+    return Math.atan2(this.imaginary, this.real);
+  }
+
   withPhaseFrom(other: ComplexNum): ComplexNum {
     if (other.magnitude() < 1e-5) {
       return this.clone();
