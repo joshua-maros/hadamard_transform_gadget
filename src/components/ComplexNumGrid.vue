@@ -25,6 +25,8 @@ const style = computed(() => `display: grid;`
   + `grid-template-rows: ${'1fr'.repeat(rows.value)};`
 );
 
+const maxSize = computed(() => Math.max(...props.modelValue.map(n => n.magnitude())));
+
 const setMagnitudes = (requests: Array<{ index: number, magnitude: number }>) => {
   const result = Array.from(previousValue.value);
   const restScale = Math.sqrt(1.0 / (previousValue.value.length - requests.length));
@@ -64,7 +66,7 @@ const edit = (event: EditEvent, editIndex: number) => {
 }
 
 const editEnd = (event: EditEndEvent, editIndex: number) => {
-  let result = Array.from(previousValue.value);
+  let result = Array.from(props.modelValue);
   if (!event.editFired) {
     if (event.tool == 'magnitude') {
       const nonZero = result.filter(x => x.magnitude() > 1e-5).length;
@@ -98,15 +100,28 @@ const editEnd = (event: EditEndEvent, editIndex: number) => {
   }
   emit('update:modelValue', result);
 }
+
+function prettyFmtNum(num: number) {
+  if (num < 0.0) {
+    throw new Error('unimplemented');
+  } else if (num < 10.0) {
+    return `${Math.floor(num + 0.005)}.${String(Math.round(num * 100.0) % 100).padStart(2, '0')}`
+  } else if (num < 100.0) {
+    return `${Math.floor(num + 0.05)}.${Math.round(num * 10.0) % 10}`
+  } else {
+    return `${Math.round(num)}`
+  }
+}
 </script>
 
 <template>
   <div>
     <div :style="style">
-      <ComplexNumDisplay v-for="(num, idx) in modelValue" :key="idx" :num="num" :normalization-factor="1"
-        @edit-start="editStart($event, idx)" @edit="edit($event, idx)" @edit-end="editEnd($event, idx)" />
+      <ComplexNumDisplay v-for="(num, idx) in modelValue" :key="idx" :num="num.scaled(1.0 / maxSize)"
+        :normalization-factor="1" @edit-start="editStart($event, idx)" @edit="edit($event, idx)"
+        @edit-end="editEnd($event, idx)" />
     </div>
-    <div class="size-hint">asdf</div>
+    <div v-if="maxSize < 0.99" class="size-hint">Number icons are {{prettyFmtNum(1.0 / maxSize)}}x bigger than what they represent.</div>
   </div>
 </template>
 

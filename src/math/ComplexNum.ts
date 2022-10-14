@@ -35,6 +35,10 @@ export class ComplexNum {
     }
   }
 
+  sum(other: ComplexNum): ComplexNum {
+    return new ComplexNum(this.real + other.real, this.imaginary + other.imaginary);
+  }
+
   scaled(by: number): ComplexNum {
     return new ComplexNum(this.real * by, this.imaginary * by)
   }
