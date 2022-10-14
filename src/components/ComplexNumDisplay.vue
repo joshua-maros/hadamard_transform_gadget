@@ -54,6 +54,7 @@ function onMouseDown(event: MouseEvent) {
 
 <template>
   <svg viewBox="-100 -100 200 200" xmlns="http://www.w3.org/2000/svg" @mousedown="onMouseDown">
+    <ellipse class="center" cx="0" cy="0" :rx="10" :ry="10" />
     <ellipse class="phase" :cx="num.real * scale" :cy="num.imaginary * scale" :rx="phaseSize * radius"
       :ry="phaseSize * radius" />
     <ellipse class="magnitude" cx="0" cy="0" :rx="radius" :ry="radius" />
@@ -63,6 +64,10 @@ function onMouseDown(event: MouseEvent) {
 <style scoped>
 svg {
   width: 100%;
+}
+
+svg ellipse.center {
+  fill: rgba(220, 220, 220, 0.5);
 }
 
 svg ellipse.magnitude {

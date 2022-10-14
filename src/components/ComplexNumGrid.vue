@@ -3,6 +3,7 @@ import { ComplexNum } from "@/math/ComplexNum";
 import type { EditEndEvent, EditEvent, EditStartEvent } from "@/events";
 import { computed, reactive, ref } from "vue";
 import ComplexNumDisplay from "./ComplexNumDisplay.vue";
+import { useSettings } from "@/stores/settings";
 
 const props = defineProps<{
   cols: number,
@@ -12,6 +13,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (name: 'update:modelValue', event: Array<ComplexNum>): void
 }>();
+
+const settings = useSettings();
 
 const previousValue = ref([] as Array<ComplexNum>);
 
@@ -117,11 +120,16 @@ function prettyFmtNum(num: number) {
 <template>
   <div>
     <div :style="style">
-      <ComplexNumDisplay v-for="(num, idx) in modelValue" :key="idx" :num="num.scaled(1.0 / maxSize)"
-        :normalization-factor="1" @edit-start="editStart($event, idx)" @edit="edit($event, idx)"
-        @edit-end="editEnd($event, idx)" />
+      <ComplexNumDisplay v-for="(num, idx) in modelValue" :key="idx"
+        :num="settings.normalizeIcons ? num.scaled(1.0 / maxSize) : num" :normalization-factor="1"
+        @edit-start="editStart($event, idx)" @edit="edit($event, idx)" @edit-end="editEnd($event, idx)" />
     </div>
-    <div v-if="maxSize < 0.99" class="size-hint">Number icons are {{prettyFmtNum(1.0 / maxSize)}}x bigger than what they represent.</div>
+    <div v-if="maxSize < 0.99 && settings.normalizeIcons" class="size-hint">
+      Number icons are {{prettyFmtNum(1.0 / maxSize)}}x bigger than what they represent.
+    </div>
+    <div v-if="maxSize < 0.51 && !settings.normalizeIcons" class="size-hint">
+      Consider turning on normalized icons to see these numbers better.
+    </div>
   </div>
 </template>
 

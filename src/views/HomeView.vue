@@ -1,45 +1,36 @@
 <script setup lang="ts">
-import { ComplexNum } from "@/math/ComplexNum";
+import { ComplexNum, hadamardTransform } from "@/math/ComplexNum";
 import { computed } from "@vue/reactivity";
 import { ref } from "vue";
 import ComplexNumGrid from "../components/ComplexNumGrid.vue";
 
 const input = ref([
   ComplexNum.polar(1.0, 0.0),
-  ComplexNum.polar(0.0, 3.14),
-  ComplexNum.polar(0.0, 3.14),
-  ComplexNum.polar(0.0, 3.14),
-  ComplexNum.polar(0.0, 3.14),
-  ComplexNum.polar(0.0, 3.14),
-  ComplexNum.polar(0.0, 3.14),
-  ComplexNum.polar(0.0, 3.14),
 ]);
 
-const output = computed(() => {
-  let prev_result = Array.from(input.value);
-  let next_result = Array.from(input.value);
-  const dims = Math.log2(input.value.length);
+const cols = ref(2);
 
-  for (let dim = 0; dim < dims; dim++) {
-    const stride = Math.pow(2, dim);
-    for (let groupStart = 0; groupStart < input.value.length; groupStart += 2 * stride) {
-      for (let element = 0; element < stride; element++) {
-        const ia = groupStart + element;
-        const ib = groupStart + element + stride;
-        next_result[ia] = scaleComplexNum(addComplexNum(prev_result[ia], prev_result[ib]), Math.SQRT1_2);
-        next_result[ib] = scaleComplexNum(subComplexNum(prev_result[ia], prev_result[ib]), Math.SQRT1_2);
-      }
-    }
-    prev_result = Array.from(next_result);
+const setNumBits = (numBits: number) => {
+  input.value = [ComplexNum.polar(1, 0)];
+  for (let i = 1; i < Math.pow(2, numBits); i++) {
+    input.value.push(ComplexNum.polar(0, 0));
   }
+  cols.value = Math.pow(2, Math.ceil(numBits / 2));
+};
 
-  return prev_result;
-});
+setNumBits(1);
+
+const output = computed(() => hadamardTransform(input.value));
 </script>
 
 <template>
   <main>
-    <ComplexNumGrid :cols="4" v-model="input" />
+    <div id="input">
+      <ComplexNumGrid :cols="cols" v-model="input" />
+    </div>
+    <div id="output">
+      <ComplexNumGrid :cols="cols" :model-value="output" />
+    </div>
   </main>
 </template>
 
@@ -47,5 +38,22 @@ const output = computed(() => {
 main {
   height: 100vh;
   overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr auto auto 1fr;
+  grid-template-areas:
+    "_0 input output _1";
+}
+
+#input,
+#output {
+  width: min(80vh, 50vw);
+}
+
+#input {
+  grid-area: input;
+}
+
+#output {
+  grid-area: output;
 }
 </style>
