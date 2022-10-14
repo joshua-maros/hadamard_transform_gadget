@@ -127,7 +127,7 @@ function prettyFmtNum(num: number) {
     <div v-if="maxSize < 0.99 && settings.normalizeIcons" class="size-hint">
       Number icons are {{prettyFmtNum(1.0 / maxSize)}}x bigger than what they represent.
     </div>
-    <div v-if="maxSize < 0.51 && !settings.normalizeIcons" class="size-hint">
+    <div v-if="maxSize < 0.49 && !settings.normalizeIcons" class="size-hint">
       Consider turning on normalized icons to see these numbers better.
     </div>
   </div>
