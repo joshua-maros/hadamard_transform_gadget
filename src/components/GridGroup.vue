@@ -47,20 +47,17 @@ function prettyFmtNum(num: number) {
 }
 
 const setArray = (value: Array<ComplexNum>, index: number) => {
-   const newValue = Array.from(props.modelValue);
-   newValue[index] = value;
-   emit('update:modelValue', newValue);
+  const newValue = Array.from(props.modelValue);
+  newValue[index] = value;
+  emit('update:modelValue', newValue);
 };
 </script>
 
 <template>
   <div>
     <div :style="style">
-      <ComplexNumGrid v-for="(array, idx) in modelValue" :key="idx"
-      :model-value="array" @update:model-value="setArray($event, idx)"
-      <ComplexNumDisplay v-for="(num, idx) in modelValue" :key="idx"
-        :num="settings.normalizeIcons ? num.scaled(1.0 / normalizationFactor) : num" :normalization-factor="1"
-        @edit-start="editStart($event, idx)" @edit="edit($event, idx)" @edit-end="editEnd($event, idx)" />
+      <ComplexNumGrid v-for="(array, idx) in modelValue" :key="idx" :model-value="array"
+        @update:model-value="setArray($event, idx)" :cols="colsPerGrid" />
     </div>
     <div v-if="normalizationFactor < 0.99 && settings.normalizeIcons" class="size-hint">
       Number icons are {{prettyFmtNum(1.0 / normalizationFactor)}}x bigger than what they represent.

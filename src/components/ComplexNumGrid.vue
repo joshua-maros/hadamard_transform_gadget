@@ -118,7 +118,7 @@ function prettyFmtNum(num: number) {
 </script>
 
 <template>
-  <div>
+  <div id="root">
     <div :style="style">
       <ComplexNumDisplay v-for="(num, idx) in modelValue" :key="idx"
         :num="settings.normalizeIcons ? num.scaled(1.0 / maxSize) : num" :normalization-factor="1"
@@ -134,6 +134,12 @@ function prettyFmtNum(num: number) {
 </template>
 
 <style scoped>
+#root {
+  background: rgba(220, 220, 220, 0.5);
+  margin: 0.5em;
+  padding: 0.5em;
+}
+
 .size-hint {
   text-align: center;
   user-select: none;

@@ -67,7 +67,7 @@ svg {
 }
 
 svg ellipse.center {
-  fill: rgba(220, 220, 220, 0.5);
+  fill: rgba(180, 180, 180, 0.5);
 }
 
 svg ellipse.magnitude {

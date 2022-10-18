@@ -43,6 +43,13 @@ export class ComplexNum {
     return new ComplexNum(this.real - other.real, this.imaginary - other.imaginary);
   }
 
+  product(other: ComplexNum): ComplexNum {
+    return new ComplexNum(
+      this.real * other.real - this.imaginary * other.imaginary, 
+      this.real * other.imaginary + this.imaginary * other.real
+    )
+  }
+
   scaled(by: number): ComplexNum {
     return new ComplexNum(this.real * by, this.imaginary * by)
   }
