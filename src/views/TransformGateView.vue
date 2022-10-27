@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import deepEqual from 'deep-equal';
 import { ComplexNum, hadamardTransform } from "@/math/ComplexNum";
 import { useSettings } from "@/stores/settings";
 import { computed } from "@vue/reactivity";
 import { ref } from "vue";
-import ComplexNumGrid from "../components/ComplexNumGrid.vue";
 import GridGroup from "../components/GridGroup.vue";
 
 const settings = useSettings();
@@ -15,6 +15,51 @@ const basis = ref([
 const gateOutput = ref([
   [ComplexNum.polar(1, 0)]
 ])
+
+function dot(col1: Array<ComplexNum>, col2: Array<ComplexNum>): ComplexNum {
+  return col1.map((x, idx) => x.product(col2[idx])).reduce((a, b) => a.sum(b));
+}
+
+function sum(col1: Array<ComplexNum>, col2: Array<ComplexNum>): Array<ComplexNum> {
+  return col1.map((x, idx) => x.sum(col2[idx]));
+}
+
+function normalized(col: Array<ComplexNum>): Array<ComplexNum> {
+  const factor = Math.sqrt(col.map(x => Math.pow(x.magnitude(), 2)).reduce((a, b) => a + b));
+  return col.map(x => x.scaled(1.0 / factor));
+}
+
+function setGateOutput(newOutput: Array<Array<ComplexNum>>) {
+  const modifiedColumnIndex = newOutput.findIndex((col, idx) => !deepEqual(col, gateOutput.value[idx]));
+    console.log(modifiedColumnIndex);
+  if (modifiedColumnIndex === -1) return;
+  const modifiedColumn = newOutput[modifiedColumnIndex];
+  gateOutput.value[modifiedColumnIndex] = modifiedColumn;
+  for (let i = 0; i < newOutput.length; i++) {
+    if (i == modifiedColumnIndex) continue;
+    let col = Array.from(newOutput[i]);
+    const modifiedFactor = dot(col, modifiedColumn).product(ComplexNum.cartesian(-1, 0));
+    col = sum(col, modifiedColumn.map(x => x.product(modifiedFactor)));
+    for (let j = 0; j < i; j++) {
+      if (j == modifiedColumnIndex) continue;
+      const prev = gateOutput.value[j];
+      const factor = dot(col, prev).product(ComplexNum.cartesian(-1, 0));
+      col = sum(col, prev.map(x => x.product(factor)));
+    }
+    if (col.every(x => x.magnitude() < 1e-5)) {
+      col = col.map(_ => ComplexNum.polar(1 / Math.sqrt(modifiedColumn.length), 0));
+      const modifiedFactor = dot(col, modifiedColumn).product(ComplexNum.cartesian(-1, 0));
+      col = sum(col, modifiedColumn.map(x => x.product(modifiedFactor)));
+      for (let j = 0; j < i; j++) {
+        if (j == modifiedColumnIndex) continue;
+        const prev = gateOutput.value[j];
+        const factor = dot(col, prev).product(ComplexNum.cartesian(-1, 0));
+        col = sum(col, prev.map(x => x.product(factor)));
+      }
+    }
+    gateOutput.value[i] = normalized(col);
+  }
+}
 
 function linearCombination(ofVectors: Array<Array<ComplexNum>>, coefficients: Array<ComplexNum>): Array<ComplexNum> {
   if (ofVectors.length != coefficients.length) {
@@ -79,7 +124,8 @@ setNumBits(1);
       <GridGroup :cols="cols" :cols-per-grid="colsPerGrid" :model-value="basis" />
     </div>
     <div id="output">
-      <GridGroup :cols="cols" :cols-per-grid="colsPerGrid" v-model="gateOutput" />
+      <GridGroup :cols="cols" :cols-per-grid="colsPerGrid" :model-value="gateOutput"
+        @update:model-value="setGateOutput" />
     </div>
     <div id="transformed-output">
       <GridGroup :cols="cols" :cols-per-grid="colsPerGrid" :model-value="transformedOutput" />

@@ -5,6 +5,7 @@ import { computed, reactive, ref } from "vue";
 import ComplexNumDisplay from "./ComplexNumDisplay.vue";
 import { useSettings } from "@/stores/settings";
 import ComplexNumGrid from "./ComplexNumGrid.vue";
+import SizeHint from "./SizeHint.vue";
 
 const props = defineProps<{
   cols: number,
@@ -18,8 +19,6 @@ const emit = defineEmits<{
 
 const settings = useSettings();
 
-const previousValue = ref([] as Array<ComplexNum>);
-
 const rows = computed(() => Math.ceil(props.modelValue.length / props.cols));
 
 const style = computed(() => `display: grid;`
@@ -30,7 +29,7 @@ const style = computed(() => `display: grid;`
   + `grid-template-rows: ${'1fr'.repeat(rows.value)};`
 );
 
-const normalizationFactor = computed(() => Math.max(...props.modelValue.map(
+const normalizationConstant = computed(() => Math.max(...props.modelValue.map(
   a => Math.max(...a.map(n => n.magnitude()))
 )));
 
@@ -57,14 +56,10 @@ const setArray = (value: Array<ComplexNum>, index: number) => {
   <div>
     <div :style="style">
       <ComplexNumGrid v-for="(array, idx) in modelValue" :key="idx" :model-value="array"
-        @update:model-value="setArray($event, idx)" :cols="colsPerGrid" />
+        :normalization-constant="normalizationConstant" @update:model-value="setArray($event, idx)"
+        :cols="colsPerGrid" />
     </div>
-    <div v-if="normalizationFactor < 0.99 && settings.normalizeIcons" class="size-hint">
-      Number icons are {{prettyFmtNum(1.0 / normalizationFactor)}}x bigger than what they represent.
-    </div>
-    <div v-if="normalizationFactor < 0.49 && !settings.normalizeIcons" class="size-hint">
-      Consider turning on normalized icons to see these numbers better.
-    </div>
+    <SizeHint :normalization-constant="normalizationConstant"/>
   </div>
 </template>
 

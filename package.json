@@ -10,6 +10,8 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@types/deep-equal": "^1.0.1",
+    "deep-equal": "^2.0.5",
     "pinia": "^2.0.21",
     "vue": "^3.2.38",
     "vue-router": "^4.1.5"

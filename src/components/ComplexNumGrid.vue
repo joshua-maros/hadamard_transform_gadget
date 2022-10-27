@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { ComplexNum } from "@/math/ComplexNum";
 import type { EditEndEvent, EditEvent, EditStartEvent } from "@/events";
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import ComplexNumDisplay from "./ComplexNumDisplay.vue";
 import { useSettings } from "@/stores/settings";
 
 const props = defineProps<{
   cols: number,
   modelValue: Array<ComplexNum>,
+  normalizationConstant: number,
 }>();
 
 const emit = defineEmits<{
-  (name: 'update:modelValue', event: Array<ComplexNum>): void
+  (name: 'update:modelValue', event: Array<ComplexNum>): void,
 }>();
 
 const settings = useSettings();
@@ -27,8 +28,6 @@ const style = computed(() => `display: grid;`
   + `grid-template-columns: ${'1fr '.repeat(props.cols)};`
   + `grid-template-rows: ${'1fr'.repeat(rows.value)};`
 );
-
-const maxSize = computed(() => Math.max(...props.modelValue.map(n => n.magnitude())));
 
 const setMagnitudes = (requests: Array<{ index: number, magnitude: number }>) => {
   const result = Array.from(previousValue.value);
@@ -98,22 +97,10 @@ const editEnd = (event: EditEndEvent, editIndex: number) => {
   } else if (event.tool == 'phase') {
     const num = result[editIndex];
     const phase = num.phase();
-    const snappedPhase = Math.round(phase / Math.PI * 12.0) / 12.0 * Math.PI;
-    previousValue.value[editIndex] = ComplexNum.polar(num.magnitude(), snappedPhase);
+    const snappedPhase = Math.round(phase / Math.PI * 4.0) / 4.0 * Math.PI;
+    result[editIndex] = ComplexNum.polar(num.magnitude(), snappedPhase);
   }
   emit('update:modelValue', result);
-}
-
-function prettyFmtNum(num: number) {
-  if (num < 0.0) {
-    throw new Error('unimplemented');
-  } else if (num < 10.0) {
-    return `${Math.floor(num + 0.005)}.${String(Math.round(num * 100.0) % 100).padStart(2, '0')}`
-  } else if (num < 100.0) {
-    return `${Math.floor(num + 0.05)}.${Math.round(num * 10.0) % 10}`
-  } else {
-    return `${Math.round(num)}`
-  }
 }
 </script>
 
@@ -121,14 +108,8 @@ function prettyFmtNum(num: number) {
   <div id="root">
     <div :style="style">
       <ComplexNumDisplay v-for="(num, idx) in modelValue" :key="idx"
-        :num="settings.normalizeIcons ? num.scaled(1.0 / maxSize) : num" :normalization-factor="1"
+        :num="settings.normalizeIcons ? num.scaled(1.0 / (normalizationConstant || 1)) : num" :normalization-factor="1"
         @edit-start="editStart($event, idx)" @edit="edit($event, idx)" @edit-end="editEnd($event, idx)" />
-    </div>
-    <div v-if="maxSize < 0.99 && settings.normalizeIcons" class="size-hint">
-      Number icons are {{prettyFmtNum(1.0 / maxSize)}}x bigger than what they represent.
-    </div>
-    <div v-if="maxSize < 0.49 && !settings.normalizeIcons" class="size-hint">
-      Consider turning on normalized icons to see these numbers better.
     </div>
   </div>
 </template>
@@ -138,11 +119,5 @@ function prettyFmtNum(num: number) {
   background: rgba(220, 220, 220, 0.5);
   margin: 0.5em;
   padding: 0.5em;
-}
-
-.size-hint {
-  text-align: center;
-  user-select: none;
-  -webkit-user-select: none;
 }
 </style>
